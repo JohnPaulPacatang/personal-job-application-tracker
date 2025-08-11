@@ -25,15 +25,15 @@ export function Login() {
       const result = await signInWithPopup(auth, provider);
 
       const user: User = result.user;
-    
+
       const userData = {
         uid: user.uid,
         displayName: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
       };
-      
-      localStorage.setItem('user', JSON.stringify(userData));
+
+      localStorage.setItem("user", JSON.stringify(userData));
 
       toast.success(`Welcome, ${user.displayName || "User"}!`);
       router.push("/dashboard");
@@ -46,23 +46,25 @@ export function Login() {
   };
 
   return (
-    <Card className="w-full max-w-sm text-center px-4 sm:px-6 lg:px-8">
-      <CardHeader>
-        <CardTitle>Login to your account</CardTitle>
-        <CardDescription>
-          Sign in with your Google account to continue
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={handleGoogleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? "Signing in..." : "Login with Google"}
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="flex justify-center items-center min-h-screen px-4 sm:px-0 py-6">
+      <Card className="w-full max-w-sm text-center">
+        <CardHeader>
+          <CardTitle>Login to your account</CardTitle>
+          <CardDescription>
+            Sign in with your Google account to continue
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Login with Google"}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -46,7 +46,7 @@ export function Login() {
   };
 
   return (
-    <Card className="w-full max-w-sm text-center">
+    <Card className="w-full max-w-sm text-center px-4 sm:px-6 lg:px-8">
       <CardHeader>
         <CardTitle>Login to your account</CardTitle>
         <CardDescription>

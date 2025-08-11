@@ -3,10 +3,8 @@ import {
   query, 
   where, 
   getDocs, 
-  orderBy,
   Timestamp,
   addDoc,
-  serverTimestamp,
   doc,
   updateDoc,
   deleteDoc
@@ -45,6 +43,7 @@ export interface CreateAppliedJobData {
   status: "Submitted" | "Interview" | "Rejected" | "Accepted" | "Pending";
   link: string;
   userUid: string;
+  dateApplied: Date; 
 }
 
 export interface UpdateAppliedJobData {
@@ -54,6 +53,7 @@ export interface UpdateAppliedJobData {
   salary: number;
   status: "Submitted" | "Interview" | "Rejected" | "Accepted" | "Pending";
   link: string;
+  dateApplied: Date; 
 }
 
 export const getAppliedJobsByUser = async (userUid: string): Promise<AppliedJobTableData[]> => {
@@ -115,7 +115,7 @@ export const addAppliedJob = async (jobData: CreateAppliedJobData): Promise<stri
       status: jobData.status,
       link: jobData.link,
       userUid: jobData.userUid,
-      dateApplied: serverTimestamp()
+      dateApplied: Timestamp.fromDate(jobData.dateApplied) 
     });
     
     toast.dismiss();
@@ -143,6 +143,7 @@ export const updateAppliedJob = async (jobId: string, jobData: UpdateAppliedJobD
       salary: jobData.salary,
       status: jobData.status,
       link: jobData.link,
+      dateApplied: Timestamp.fromDate(jobData.dateApplied) // Convert Date to Timestamp
     });
     
     toast.dismiss();

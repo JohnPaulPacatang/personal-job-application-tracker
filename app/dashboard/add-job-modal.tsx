@@ -19,6 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/components/ui/popover";
+import { Calendar } from "@/app/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { addAppliedJob, CreateAppliedJobData } from "@/lib/appliedJobsService";
 
@@ -29,6 +38,7 @@ interface AddJobFormData {
   salary: string;
   status: "Submitted" | "Interview" | "Rejected" | "Accepted" | "Pending";
   link: string;
+  dateApplied: Date | undefined;
 }
 
 interface AddJobModalProps {
@@ -52,9 +62,10 @@ export default function AddJobModal({
     salary: "",
     status: "Submitted",
     link: "",
+    dateApplied: new Date(), 
   });
 
-  const handleInputChange = (field: keyof AddJobFormData, value: string) => {
+  const handleInputChange = (field: keyof AddJobFormData, value: string | Date | undefined) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -69,24 +80,25 @@ export default function AddJobModal({
       salary: "",
       status: "Submitted",
       link: "",
+      dateApplied: new Date(),
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate required fields
+ 
     if (
       !formData.companyName.trim() ||
       !formData.jobTitle.trim() ||
       !formData.location.trim() ||
-      !formData.salary.trim()
+      !formData.salary.trim() ||
+      !formData.dateApplied
     ) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Validate salary is a number
     const salaryNumber = parseFloat(formData.salary);
     if (isNaN(salaryNumber) || salaryNumber < 0) {
       toast.error("Please enter a valid salary amount");
@@ -104,6 +116,7 @@ export default function AddJobModal({
         status: formData.status,
         link: formData.link.trim() || "",
         userUid: userUid,
+        dateApplied: formData.dateApplied, 
       };
 
       await addAppliedJob(jobData);
@@ -192,6 +205,40 @@ export default function AddJobModal({
                 disabled={isSubmitting}
                 required
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="dateApplied">Date Applied *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.dateApplied && "text-muted-foreground"
+                    )}
+                    disabled={isSubmitting}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.dateApplied ? (
+                      format(formData.dateApplied, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.dateApplied}
+                    onSelect={(date) => handleInputChange("dateApplied", date)}
+                    initialFocus
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid gap-2">

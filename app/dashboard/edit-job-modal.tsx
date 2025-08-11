@@ -15,8 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/components/ui/popover";
+import { Calendar } from "@/app/components/ui/calendar";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { AppliedJobTableData, updateAppliedJob, UpdateAppliedJobData } from "@/lib/appliedJobsService";
 
 interface EditJobModalProps {
@@ -26,21 +35,36 @@ interface EditJobModalProps {
   onSuccess: () => void;
 }
 
+interface EditFormData {
+  companyName: string;
+  jobTitle: string;
+  location: string;
+  salary: number;
+  status: "Submitted" | "Interview" | "Rejected" | "Accepted" | "Pending";
+  link: string;
+  dateApplied: Date | undefined;
+}
+
 export function EditJobModal({ isOpen, onClose, job, onSuccess }: EditJobModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EditFormData>({
     companyName: "",
     jobTitle: "",
     location: "",
     salary: 0,
-    status: "Submitted" as "Submitted" | "Interview" | "Rejected" | "Accepted" | "Pending",
+    status: "Submitted",
     link: "",
+    dateApplied: undefined,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Update form values when job changes
   useEffect(() => {
     if (job) {
+      const parseDate = (dateString: string): Date => {
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? new Date() : date;
+      };
+
       setFormData({
         companyName: job.companyName,
         jobTitle: job.jobTitle,
@@ -48,6 +72,7 @@ export function EditJobModal({ isOpen, onClose, job, onSuccess }: EditJobModalPr
         salary: job.salary,
         status: (job.status.charAt(0).toUpperCase() + job.status.slice(1)) as any,
         link: job.link,
+        dateApplied: parseDate(job.dateApplied),
       });
       setErrors({});
     }
@@ -70,6 +95,10 @@ export function EditJobModal({ isOpen, onClose, job, onSuccess }: EditJobModalPr
 
     if (formData.salary <= 0) {
       newErrors.salary = "Salary must be a positive number";
+    }
+
+    if (!formData.dateApplied) {
+      newErrors.dateApplied = "Date applied is required";
     }
 
     if (!formData.link.trim()) {
@@ -101,6 +130,7 @@ export function EditJobModal({ isOpen, onClose, job, onSuccess }: EditJobModalPr
         salary: formData.salary,
         status: formData.status,
         link: formData.link,
+        dateApplied: formData.dateApplied!,
       };
 
       await updateAppliedJob(job.id, updateData);
@@ -115,7 +145,6 @@ export function EditJobModal({ isOpen, onClose, job, onSuccess }: EditJobModalPr
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
     }
@@ -129,6 +158,7 @@ export function EditJobModal({ isOpen, onClose, job, onSuccess }: EditJobModalPr
       salary: 0,
       status: "Submitted",
       link: "",
+      dateApplied: undefined,
     });
     setErrors({});
     onClose();
@@ -201,6 +231,44 @@ export function EditJobModal({ isOpen, onClose, job, onSuccess }: EditJobModalPr
             />
             {errors.salary && (
               <p className="text-sm text-red-500">{errors.salary}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dateApplied">Date Applied</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.dateApplied && "text-muted-foreground",
+                    errors.dateApplied && "border-red-500"
+                  )}
+                  disabled={isSubmitting}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.dateApplied ? (
+                    format(formData.dateApplied, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.dateApplied}
+                  onSelect={(date) => handleInputChange("dateApplied", date)}
+                  initialFocus
+                  disabled={(date) =>
+                    date > new Date() || date < new Date("1900-01-01")
+                  }
+                />
+              </PopoverContent>
+            </Popover>
+            {errors.dateApplied && (
+              <p className="text-sm text-red-500">{errors.dateApplied}</p>
             )}
           </div>
 

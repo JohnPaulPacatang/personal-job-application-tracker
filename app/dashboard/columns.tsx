@@ -1,5 +1,4 @@
 "use client";
-
 import { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowUpDown,
@@ -66,7 +65,31 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Actions Cell Component
+const parseDate = (dateStr: string): Date => {
+  const formats = [
+    /^\d{4}-\d{2}-\d{2}$/, 
+    /^\d{2}\/\d{2}\/\d{4}$/, 
+    /^\d{2}-\d{2}-\d{4}$/, 
+    /^\d{1,2}\/\d{1,2}\/\d{4}$/, 
+  ];
+
+  let parsedDate: Date;
+
+  if (formats[0].test(dateStr)) {
+    parsedDate = new Date(dateStr);
+  } else if (formats[1].test(dateStr) || formats[3].test(dateStr)) {
+    const parts = dateStr.split('/');
+    parsedDate = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+  } else if (formats[2].test(dateStr)) {
+    const parts = dateStr.split('-');
+    parsedDate = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+  } else {
+    parsedDate = new Date(dateStr);
+  }
+  
+  return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+};
+
 function ActionsCell({ 
   job, 
   onEdit, 
@@ -154,7 +177,6 @@ function ActionsCell({
   );
 }
 
-// Create columns function that accepts handlers
 export const createAppliedJobsColumns = (
   onEdit: (job: AppliedJobTableData) => void,
   onRefresh: () => void
@@ -295,6 +317,13 @@ export const createAppliedJobsColumns = (
         {row.getValue("dateApplied")}
       </div>
     ),
+    // Custom sorting function for dates
+    sortingFn: (rowA, rowB, columnId) => {
+      const dateA = parseDate(rowA.getValue(columnId) as string);
+      const dateB = parseDate(rowB.getValue(columnId) as string);
+      
+      return dateA.getTime() - dateB.getTime();
+    },
     size: 120,
   },
   {

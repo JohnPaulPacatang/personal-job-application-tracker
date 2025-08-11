@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Nav from "./nav";
 import { createAppliedJobsColumns } from "./columns";
 import { EnhancedDataTable } from "./data-table";
@@ -13,6 +13,7 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { Plus } from "lucide-react";
 import AddJobModal from "./add-job-modal";
 import { EditJobModal } from "./edit-job-modal";
+import React from "react";
 
 const ContentSkeleton = () => (
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
@@ -51,12 +52,8 @@ export default function Dashboard() {
       }
     }
   }, []);
-
-  useEffect(() => {
-    fetchAppliedJobs();
-  }, [user]);
-
-  const fetchAppliedJobs = async () => {
+  
+  const fetchAppliedJobs = useCallback(async () => {
     if (!user?.uid) return;
 
     try {
@@ -64,11 +61,16 @@ export default function Dashboard() {
       const jobs = await getAppliedJobsByUser(user.uid);
       setAppliedJobs(jobs);
     } catch (error) {
+      console.error("Error fetching jobs:", error);
       toast.error("Failed to load applied jobs");
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    fetchAppliedJobs();
+  }, [fetchAppliedJobs]);
 
   const handleJobAdded = () => {
     fetchAppliedJobs();
@@ -88,16 +90,9 @@ export default function Dashboard() {
     fetchAppliedJobs(); 
   };
 
-  const columns = createAppliedJobsColumns(handleEdit, fetchAppliedJobs);
-
-  const NavSkeleton = () => (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-      <div className="space-y-2">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-32" />
-      </div>
-      <Skeleton className="h-10 w-full sm:w-36" />
-    </div>
+  const columns = React.useMemo(
+    () => createAppliedJobsColumns(handleEdit, fetchAppliedJobs),
+    [fetchAppliedJobs]
   );
 
   if (!user) {
@@ -126,13 +121,13 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-6 sm:py-8">
+        <div className="py-4 sm:py-6">
           <Nav loading={loading} />
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pb-8 pt-6 sm:pt-8">
+        <div className="pb-2 pt-2 sm:pt-4">
           {loading ? (
             <ContentSkeleton />
           ) : (
